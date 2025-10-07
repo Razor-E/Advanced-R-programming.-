@@ -1,0 +1,61 @@
+---
+title: "Assignment 1"
+output: pdf_document
+date: "2025-10-07"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages, include=FALSE}
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+```
+
+**Importing data and merging required sheets.**
+
+```{r, comment='>'}
+path <- 'C:\\Users\\Northwest-mwea\\Downloads\\BA Dataset.xlsx'
+
+sheets <- c('Products', 'Customers', 'Orders')
+
+sales <- lapply(sheets, function(s){
+  read_excel(path, sheet = s) |> 
+    mutate(sheet = s, .before = 1)
+}) |> 
+  bind_rows()
+
+sales
+```
+
+
+**Stacked Bar chart of number of orders by Marital Status and Gender**
+
+```{r}
+sales |> 
+  select(MaritalStatus, Gender) |> 
+  drop_na() |> 
+  ggplot(aes(x = Gender, fill = MaritalStatus)) +
+  geom_bar() +
+  labs(
+    title = 'Bar graph showing number of Orders by Gender and Marital Status',
+    y = 'Orders'
+  )
+```
+
+**Grouped line chart of sales amount by order month for each SalesTerritoryCountry **
+
+```{r}
+sales |> 
+  mutate(Date = as.Date(OrderDate), Month = floor_date(OrderDate, 'month')) |> 
+  group_by(SalesTerritoryCountry, Month) |> 
+  summarise(MeanMonthlySales = mean(SalesAmount, na.rm = TRUE)) |> 
+  ungroup() |> 
+  drop_na() |> 
+  ggplot(aes(x = Month, y = MeanMonthlySales, colour = SalesTerritoryCountry)) +
+  geom_line() +
+  facet_wrap(~SalesTerritoryCountry)
+```
