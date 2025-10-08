@@ -1,0 +1,44 @@
+---
+title: "Untitled"
+output: html_document
+date: "2025-10-08"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+library(readxl)
+library(dplyr)
+```
+```{r}
+
+my_data <- read_excel("/Users/apple/Downloads/BA Dataset.xlsx")
+
+
+```
+```{r} 
+head(my_data)
+```
+
+```{r}
+
+graph<- ggplot(my_data, aes(x = 'territory.group', y = 'yearly.Income', fill = 'territory.group')) +
+  geom_violin(trim =FALSE, fill='#A4A4A4')+
+  labs(
+    title = "Distribution of Yearly Income by Territory Group",
+    x = "Territory Group",
+    y = "Yearly Income"
+  )+ scale_fill_brewer()+ 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+```{r}
+print(graph)
+```
+
+
+
+ 
