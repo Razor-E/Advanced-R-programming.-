@@ -40,6 +40,10 @@ library(ggrepel)
 ```{r, comment='>'}
 path <- 'BA Dataset.xlsx'
 
+Customers <- read_excel(path, sheet = 'Customers')
+products <- read_excel(path, sheet = "Products")
+orders <- read_excel(path, sheet = "Orders")
+
 sheets <- c('Products', 'Customers', 'Orders')
 
 # Merging vertically
@@ -61,7 +65,7 @@ sales
 **Stacked Bar chart of number of orders by Marital Status and Gender**
 
 ```{r}
-sales |> 
+Marital_Gender <- inner_join(Customers, orders, by = 'CustomerKey') |> 
   select(MaritalStatus, Gender) |> 
   drop_na() |> 
   ggplot(aes(x = Gender, fill = MaritalStatus)) +
@@ -70,6 +74,8 @@ sales |>
     title = 'Bar graph showing number of Orders by Gender and Marital Status',
     y = 'Orders'
   )
+
+Marital_Gender
 ```
 
 Based on the total length of each bar, we can conclude that the highest number of orders were received from males. 
@@ -91,7 +97,8 @@ sales |>
   drop_na() |> 
   ggplot(aes(x = Month, y = MeanMonthlySales, colour = SalesTerritoryCountry, 
              group = SalesTerritoryCountry)) +
-  geom_line()
+  geom_line() +
+  ggtitle('Grouped line graph showing mean monthly sales for each Country')
 ```
 
 The line graph shows that the mean monthly sales, at the beginning of year 2017, for the six territory countries was at climax despite United Kingdom having the lowest sales (Below 3000). 
@@ -147,9 +154,6 @@ Younger, single customers are more likely to not own a house, while older, marri
 
 ```{r, comment='>'}
 # Performing left join merge style
-products <- read_excel(path, sheet = "Products")
-orders <- read_excel(path, sheet = "Orders")
-
 Category_Sales <- orders |> 
   left_join(products, by = c("ProductStandardCost" = "StandardCost")) |> 
   select(ProductStandardCost, ProductCategoryName, SalesAmount)
