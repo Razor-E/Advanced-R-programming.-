@@ -19,10 +19,26 @@ library(tidyr)
 library(ggrepel)
 ```
 
+**GROUP MEMBERS**
+
+- Elosy Gatumi 22/04764
+
+- Perpetual Mungai 22/07585
+
+- Edwin Igecha 22/04989
+
+- Dennis Murimi 22/04591
+
+- Kennedy Njuguna 22/04705
+
+- Mwanzia Alfas 22/04986
+
+\newpage
+
 **Importing data and merging required sheets.**
 
 ```{r, comment='>'}
-path <- 'C:\\Users\\Northwest-mwea\\Downloads\\BA Dataset.xlsx'
+path <- 'BA Dataset.xlsx'
 
 sheets <- c('Products', 'Customers', 'Orders')
 
@@ -64,7 +80,7 @@ Also married males had more number of orders compared to married females because
 
 \newpage
 
-**Grouped line chart of sales amount by order month for each SalesTerritoryCountry **
+**Grouped line chart of sales amount by order month for each SalesTerritoryCountry**
 
 ```{r}
 sales |> 
@@ -167,8 +183,6 @@ The chart shows that Bikes make up the vast majority of sales, accounting for 98
 
 The other categories, accessories-0.941% and clothing-0.860%, represent a much smaller fraction of sales.
 
-We can therefore conclude that Bikes are the best selling product.
-
 The caption states that there was an additional Product Category called components. These had no sales at all and were therefore excluded from the graph.
 
 \newpage
@@ -176,7 +190,13 @@ The caption states that there was an additional Product Category called componen
 **Violin plot of YearlyIncome vs SalesTerritoryGroup**
 
 ```{r}
-ggplot(sales, aes(x = 'territory.group', y = 'yearly.Income', fill = 'territory.group')) +
+Customers <- read_excel(path, sheet = 'Customers')
+
+Territory_income <- inner_join(Customers, orders, by = 'CustomerKey') |> 
+  select(SalesTerritoryGroup, YearlyIncome)
+
+ggplot(Territory_income, aes(x = SalesTerritoryGroup, y = YearlyIncome, 
+                             fill = SalesTerritoryGroup)) +
   geom_violin(trim =FALSE, fill='steelblue')+
   labs(
     title = "Distribution of Yearly Income by Territory Group",
@@ -186,6 +206,44 @@ ggplot(sales, aes(x = 'territory.group', y = 'yearly.Income', fill = 'territory.
   scale_fill_brewer()
 ```
 
+- **Europe**
+
+Majority of people here earn below 50000 as shown by the big bulge below this range.
+
+There are a few but significant number of people here earning a yearly income of around 125,000.
+
+There's also few but still sizeable high earners, who have a yearly income of more than 150,000
+
+The distribution appears a bit skewed to the right since most earners are in the lower proportions.
+
+- **North America**
+
+Most individuals cluster between yearly incomes of 25,000 and 100,000 since the bulges are compressed in this ranges. 
+
+The biggest bulge is between 50,000 and 75,000. Most people lie here
+
+Few earn above 100,000 and fewer still earn below 25,000
+
+The distribution appears fairly symmetric
+
+**Pacific**
+
+Most people earn around 60,000 yearly.
+
+A sizeable population here earns below 50000
+
+There's a small number of very high earners
+
+The overall spread is wide showing a wide range of incomes from individuals here
+
+The distribution has some bit of skewness to the right. Since most earners are lower than 60,000. However, there's a significant number of people earning more than this.
+
+*Though most earn below 50,000, income inequality is high in Europe as there are clusters in higher income ranges. Higher variability is evident here.*
+
+*Yearly Income in North America looks more normal as it's centered around 50,000 with few earners in the extreme ranges*
+
+*The Pacific shows generally lower incomes though not as much as in Europe, but still one of the highest variability among income ranges*
+
 \newpage
 
 **Heatmap of Total sales by SalesTerritoryCountry and EnglishEducation**
@@ -193,13 +251,12 @@ ggplot(sales, aes(x = 'territory.group', y = 'yearly.Income', fill = 'territory.
 *Importing and merging data set in required format*
 
 ```{r, comment='>'}
-Customers <- read_excel(path, sheet = 'Customers')
-
 Country_Education_sales <- inner_join(Customers, orders, by = 'CustomerKey') |> 
   select(SalesTerritoryCountry, EnglishEducation, SalesAmount)
 
 Country_Education_sales
 ```
+
 
 ```{r, comment='>'}
 # Grouping Data
@@ -209,6 +266,9 @@ heatmap_data <- Country_Education_sales |>
 
 heatmap_data
 ```
+
+
+\newpage 
 
 ```{r, comment='>'}
 # Reshaping into matrix format necessary for heat map
@@ -235,3 +295,28 @@ heatmap_data |>
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+**According to country**
+
+- *Australia*
+
+The highest sales overall are to Customers in Australia who have a Bachelors. They take up this ranking both across every country and across every education group.
+
+An increase in total sales here generally corresponds to an increase in the level of English Education. Evidence of some positive correlation
+
+- *United States*
+
+Majority of customers here have high levels of education. As seen by dark shades in the Bachelors, Graduates and Partial College education levels
+
+- *United Kingdom, Germany, France and Canada*
+
+Total sales to customers in these countries are low as seen by the lighter shades. 
+
+The least total sales are from Customers in Canada
+
+**According to Education Level**
+
+Customers with the Partial High school level of English Education have the least total sales across every country. This is closely followed by the High school and Graduate levels.
+
+Those with the High school level closely follow as a group with generally low sales across countries.
+
+Those with Partial College education and a Bachelors correspond to generally higher total sales.
