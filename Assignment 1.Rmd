@@ -1,11 +1,13 @@
 ---
 title: "Assignment 1"
-output: pdf_document
+output:
+  pdf_document: default
+  word_document: default
 date: "2025-10-07"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, comment = FALSE)
 ```
 
 ```{r packages, include=FALSE}
@@ -13,6 +15,8 @@ library(readxl)
 library(dplyr)
 library(ggplot2)
 library(lubridate)
+library(tidyr)
+library(ggrepel)
 ```
 
 **Importing data and merging required sheets.**
@@ -22,15 +26,21 @@ path <- 'C:\\Users\\Northwest-mwea\\Downloads\\BA Dataset.xlsx'
 
 sheets <- c('Products', 'Customers', 'Orders')
 
+# Merging vertically
 sales <- lapply(sheets, function(s){
   read_excel(path, sheet = s) |> 
     mutate(sheet = s, .before = 1)
 }) |> 
-  bind_rows()
+  bind_rows() |> 
+  mutate(
+    Year = year(BirthDate),
+    Age = 2025 - Year
+  )
 
 sales
 ```
 
+\newpage  
 
 **Stacked Bar chart of number of orders by Marital Status and Gender**
 
@@ -46,16 +56,182 @@ sales |>
   )
 ```
 
+Based on the total length of each bar, we can conclude that the highest number of orders were received from males. 
+
+Comparing color segments across gender based on the absolute length of the segments at the baseline, we can conclude that single females had more number of orders than single males. 
+
+Also married males had more number of orders compared to married females because the married male’s segment baseline was below that of married females and it also close above the segment of married females.
+
+\newpage
+
 **Grouped line chart of sales amount by order month for each SalesTerritoryCountry **
 
 ```{r}
 sales |> 
   mutate(Date = as.Date(OrderDate), Month = floor_date(OrderDate, 'month')) |> 
   group_by(SalesTerritoryCountry, Month) |> 
-  summarise(MeanMonthlySales = mean(SalesAmount, na.rm = TRUE)) |> 
+  summarise(MeanMonthlySales = mean(SalesAmount, na.rm = TRUE), .groups = 'drop_last') |> 
   ungroup() |> 
   drop_na() |> 
-  ggplot(aes(x = Month, y = MeanMonthlySales, colour = SalesTerritoryCountry)) +
-  geom_line() +
-  facet_wrap(~SalesTerritoryCountry)
+  ggplot(aes(x = Month, y = MeanMonthlySales, colour = SalesTerritoryCountry, 
+             group = SalesTerritoryCountry)) +
+  geom_line()
 ```
+
+The line graph shows that the mean monthly sales, at the beginning of year 2017, for the six territory countries was at climax despite United Kingdom having the lowest sales (Below 3000). 
+
+There was no clear direction on the trend of sales for every territory country between year 2017 and 2018 except for Germany whose sales spiked lower than others mid 2017 (Below 2000). 
+There was a huge drop on monthly sales for every country across the years, with Canada recording the highest drop on sales, (Below 1500), between late 2017 and mid 2018. 
+
+The second phase of monthly sales drop for all the territory countries took place between late 2018 and the beginning of year 2019. 
+
+There was no significant growth on sales as the chart was moving horizontally(constant) between 2019 and 2020. 
+
+We can conclude that there was a declining mean monthly sales in all the territory countries between year 2017 to 2020.
+
+\newpage
+
+**Histogram of customers’ ages color bars by MaritalStatus and facet wrap by HouseOwnershipFlag**
+
+```{r}
+sales |> 
+  select(Age, MaritalStatus, HouseOwnerFlag) |> 
+  drop_na() |>
+  ggplot(aes(x = Age, fill = MaritalStatus)) +
+    geom_histogram(binwidth = 5,color = "black",alpha = 0.7) +
+    facet_wrap(~ HouseOwnerFlag) +
+    labs(title="distributions of customers' ages by marital status and houseownership",
+         x="age of customer",
+         y="count of customers",
+         fill="marital status") +
+    theme_minimal()
+```
+
+The panel on the left shows customers who do not own a house. 
+
+The majority of these customers are younger, with a peak count in the 30-40 age range and a steady drop from ages 50 to 90. 
+
+Within this group, single customers are more prevalent than married customers, especially in the younger age brackets.
+
+The panel on the right shows customers who own a house. 
+
+The age distribution for this group is centered on a higher age range, with a peak count between 50 and 60 years old. 
+
+In this group, married customers significantly outnumber single customers across all age ranges.
+
+The data suggests a strong positive correlation between age, marital status, and houseownership. 
+
+Younger, single customers are more likely to not own a house, while older, married customers are more likely to be homeowners.
+
+\newpage
+
+**Donut chart of ProductCategoryName vs SalesAmount**
+
+*Importing and merging dataset in required format*
+
+```{r, comment='>'}
+# Performing left join merge style
+products <- read_excel(path, sheet = "Products")
+orders <- read_excel(path, sheet = "Orders")
+
+Category_Sales <- orders |> 
+  left_join(products, by = c("ProductStandardCost" = "StandardCost")) |> 
+  select(ProductStandardCost, ProductCategoryName, SalesAmount)
+
+Category_Sales
+```
+
+\newpage
+
+```{r}
+Category_Sales |> 
+  group_by(ProductCategoryName) |> 
+  summarise(Sales = sum(SalesAmount)) |> 
+  mutate(
+    Fraction = Sales / sum(Sales),
+    Label = paste0(ProductCategoryName, " ", scales::percent(Fraction))
+  ) |> 
+  ggplot(aes(x = 2, y = Fraction, fill = ProductCategoryName)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar("y") +
+  theme_void() +
+  geom_text_repel(aes(label = Label, y = cumsum(Fraction) - Fraction / 2),
+                  nudge_x = 1, show.legend = FALSE, size = 4) +
+  xlim(c(0.5, 3)) +
+  guides(fill = guide_legend(title = "ProductCategoryName")) +
+  labs(title = 'Donut chart of the sale of different product categoires',
+       caption = 'There were no sales of the components category')
+```
+
+The chart shows that Bikes make up the vast majority of sales, accounting for 98.198% of the total. 
+
+The other categories, accessories-0.941% and clothing-0.860%, represent a much smaller fraction of sales.
+
+We can therefore conclude that Bikes are the best selling product.
+
+The caption states that there was an additional Product Category called components. These had no sales at all and were therefore excluded from the graph.
+
+\newpage
+
+**Violin plot of YearlyIncome vs SalesTerritoryGroup**
+
+```{r}
+ggplot(sales, aes(x = 'territory.group', y = 'yearly.Income', fill = 'territory.group')) +
+  geom_violin(trim =FALSE, fill='steelblue')+
+  labs(
+    title = "Distribution of Yearly Income by Territory Group",
+    x = "Territory Group",
+    y = "Yearly Income"
+  ) + 
+  scale_fill_brewer()
+```
+
+\newpage
+
+**Heatmap of Total sales by SalesTerritoryCountry and EnglishEducation**
+
+*Importing and merging data set in required format*
+
+```{r, comment='>'}
+Customers <- read_excel(path, sheet = 'Customers')
+
+Country_Education_sales <- inner_join(Customers, orders, by = 'CustomerKey') |> 
+  select(SalesTerritoryCountry, EnglishEducation, SalesAmount)
+
+Country_Education_sales
+```
+
+```{r, comment='>'}
+# Grouping Data
+heatmap_data <- Country_Education_sales |> 
+  group_by(SalesTerritoryCountry, EnglishEducation) |> 
+  summarise(TotalSales = sum(SalesAmount, na.rm = TRUE), .groups = 'drop_last')
+
+heatmap_data
+```
+
+```{r, comment='>'}
+# Reshaping into matrix format necessary for heat map
+heatmap_data |> 
+  pivot_wider(
+    names_from = EnglishEducation,
+    values_from = TotalSales
+  )
+```
+
+\newpage
+
+```{r}
+# Creating Heatmap
+heatmap_data |> 
+  ggplot(aes(x = EnglishEducation, y = SalesTerritoryCountry, fill = TotalSales)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "lightblue", high = "darkblue") +
+  labs(title = "Total Sales by Country and Education Level",
+       x = "English Education",
+       y = "Sales Territory Country",
+       fill = "Total Sales") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
